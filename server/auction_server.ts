@@ -27,10 +27,12 @@ app.get('/', (req, res) => {
     res.send("Hello Express");
 });
 
-app.get('/products', (req, res) => {
-    res.send('接收到商品查询请求');
+app.get('/api/products', (req, res) => {
+    res.json(products);
 });
-
+app.get('/api/products/:id',(req,res)=>{
+    res.json(products.find((product)=>product.id == req.params.id));
+});
 const server = app.listen(8000,'localhost',()=>{
     console.log("服务器启动，地址是：http://localhost:8000");
 });

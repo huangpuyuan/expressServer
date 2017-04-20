@@ -32,9 +32,8 @@ app.get('/api/products', function (req, res) {
     res.json(products);
 });
 app.get('/api/products/:id', function (req, res) {
-    res.json(products.find((product)=> product.id == req.params.id));
+    res.json(products.find(function (product) { return product.id == req.params.id; }));
 });
-
 var server = app.listen(8000, 'localhost', function () {
     console.log("服务器启动，地址是：http://localhost:8000");
 });
