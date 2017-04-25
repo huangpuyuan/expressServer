@@ -75,20 +75,44 @@ app.get('/api/products/:id/comments', (req, res) => {
 const server = app.listen(8000, 'localhost', () => {
     console.log("服务器启动，地址是：http://localhost:8000");
 });
+const subscriptions = new Map<any, number[]>();
 
 const wsServer = new Server({port: 8085});
 wsServer.on("connection", websocket => {
     websocket.send("这个消息是服务器主动推送的");
     websocket.on("message", message => {
-        console.log("接收到消息", message);
+        // console.log("接收到消息", message);
+        let messageObj = JSON.parse(message);
+        let productIds = subscriptions.get(websocket) || [];
+        subscriptions.set(websocket, [...productIds, messageObj.productId]);
     });
-})
+});
 
-//  定时推送模式
-// setInterval(() => {
-//     if (wsServer.clients) {
-//         wsServer.clients.forEach( client =>{
-//             client.send('这是每隔2s钟定时推送的');
-//         })
-//     }
-// }, 2000);
+const currentBids = new Map<number, number>();
+
+// if (wsServer.clients) {
+//     wsServer.clients.forEach( client =>{
+//         client.send('这是每隔2s钟定时推送的');
+//     })
+// }
+// 定时推送一个自动生成的价格
+
+setInterval(() => {
+    products.forEach(p => {
+        let currentBid = currentBids.get(p.id) || p.price;
+        let newBid = currentBid + Math.random() * 5;
+        currentBids.set(p.id, newBid);
+    });
+
+    subscriptions.forEach((productIds: number[], ws) => {
+        if (ws.readyState === 1) {
+            let newBids = productIds.map(pid => ({
+                productId: pid,
+                bid: currentBids.get(pid)
+            }));
+            ws.send(JSON.stringify(newBids));
+        } else {
+            subscriptions.delete(ws);
+        }
+    });
+}, 2000);
